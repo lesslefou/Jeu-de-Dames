@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 969a613a6d22f194c808cf336837b82b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - camBlanche: {fileID: 8903229178236733225, guid: 153e02a207350984b99643051a864189, type: 3}
+  - camNoire: {fileID: 606327613791330065, guid: 6fae826ece5b1ac4eb43c8ed1b8b6d8c, type: 3}
+  - lightBlanche: {fileID: 293563167089663069, guid: 65c0159c1a618ea49bda7c387a557fab, type: 3}
+  - lightNoire: {fileID: 2479795003452507860, guid: 819b92134d6d6ac4aba1ada165848a05, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

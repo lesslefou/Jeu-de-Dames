@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Piece : MonoBehaviour
+public class JoueurAffichage : MonoBehaviour
 {
-    public Vector2 coordinates;
-    public Color color;
-    public Piece piece;
+    public int nbPiece;
+    public TextMesh nameJoueur;
+
     // Start is called before the first frame update
     void Start()
     {
-
         
     }
 
@@ -20,5 +19,3 @@ public class Piece : MonoBehaviour
         
     }
 }
-
-    

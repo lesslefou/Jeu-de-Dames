@@ -3,7 +3,16 @@ guid: 3f9807b9c7fe4da4b88ff21e7a28ab09
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - tilePrefab: {instanceID: 0}
+  - piecePrefab: {instanceID: 0}
+  - pieceObject: {instanceID: 0}
+  - tileObject: {instanceID: 0}
+  - nomPrefab: {instanceID: 0}
+  - cameraBlanche: {fileID: 6111942873126648406, guid: cb2d6fac5a76fee438ec1936d9815f13, type: 3}
+  - cameraNoire: {fileID: 8266620901049600051, guid: b2a224557ca1fa349991a55173e44c9a, type: 3}
+  - lightBlanche: {fileID: 8098217763752603277, guid: 1a13279bc51066841be3b34e40eb4084, type: 3}
+  - lightNoire: {fileID: 3534205180107212054, guid: e41d12cda0590d44494179a172fd6117, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
