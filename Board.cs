@@ -25,6 +25,7 @@ public class Board : MonoBehaviour
     private bool haut = false, droite = false;
     private float X1=0, Y1=0;
     private int type = 0;   // =1 dplcmt simple   =2 tentative manger pion    =0 dplcmt non possible
+    private int rejoue = 0;
     
 
     // Start is called before the first frame update
@@ -81,11 +82,14 @@ public class Board : MonoBehaviour
                         else { 
                             Debug.Log("Sélection dplcmt");
                             mouseDestinationUpdate();
-                            if (checkIfMovePossible(joueur)){
-                                movePiece();
-                                Debug.Log("Bien joué, au tour de l'autre joueur");
-                                changementJoueur();
-                                Debug.Log("next = "+ next);
+                            if (checkIfMovePossible(joueur,rejoue)){
+                                if (movePiece()){
+                                    Debug.Log("Selectionnez un autre pion à manger");
+                                }
+                                else {
+                                    Debug.Log("Bien joué, au tour de l'autre joueur");
+                                    changementJoueur();
+                                }
                             }
                         }
                     }                    
@@ -96,12 +100,16 @@ public class Board : MonoBehaviour
                         mouseDestinationUpdate();
 
                         //On regarde si on peut déplacer la pièce
-                        if (checkIfMovePossible(joueur)){
-                            movePiece();
-                            Debug.Log("Bien joué, au tour de l'autre joueur");
-                            mouseOver = new Vector2(0,0);
-                            mouseDestination = new Vector2(0,0);
-                            changementJoueur();
+                        if (checkIfMovePossible(joueur,rejoue)){
+                            if (checkIfMovePossible(joueur,rejoue)){
+                                if (movePiece()){
+                                    Debug.Log("Selectionnez un autre pion à manger");
+                                }
+                                else {
+                                    Debug.Log("Bien joué, au tour de l'autre joueur");
+                                    changementJoueur();
+                                }
+                            }
                         }
                     }
                     else {
@@ -144,12 +152,9 @@ public class Board : MonoBehaviour
             Debug.Log ("Changement de joueur B->N");
         }
         next = false;
-        
-        ChangeNomAffichage();
-        changePositionNomAffichage();
     }
 
-    private void movePiece(){
+    private bool movePiece(){
         Piece toMove = pieces[(int)(mouseOver.x -1),(int)(mouseOver.y -1)];
         toMove.transform.position = new Vector3(mouseDestination.x,0.6f,mouseDestination.y);
         toMove.coordinates = new Vector2(mouseDestination.y,mouseDestination.x);
@@ -163,7 +168,7 @@ public class Board : MonoBehaviour
         
         if (sup == true) {
             
-            Piece toDestroy = pieces[(int)X1-1,(int)Y1-1];
+            Piece toDestroy = pieces[(int)(X1-1),(int)(Y1-1)];
             if (toDestroy!=null) {
                 pieces[(int)(mouseDestination.x -1),(int)(mouseDestination.y -1)] = null;
                 
@@ -184,21 +189,91 @@ public class Board : MonoBehaviour
         pieces[(int)(mouseDestination.x -1),(int)(mouseDestination.y -1)] = toMove;
         if ( pieces[(int)(mouseDestination.x -1),(int)(mouseDestination.y -1)] != null) {
             Debug.Log("Enregistrement nouvelle case réussite");
-            Debug.Log("mD.x-1 = " + (mouseDestination.x -1) +"\nmD.y-1 = " + (mouseDestination.y -1) );
         }
         pieces[(int)(mouseOver.x -1),(int)(mouseOver.y -1)] = null;
 
-        //Réinitialisation des indicateurs
-        sup = false;
-        ok = 0;
-        X1 = 0;
-        Y1 = 0;
-        haut = false;
-        droite = false;
-        type = 0;
+        if (sup == true && checkIfMoveAgainPossible()){
+            Debug.Log("Vous pouvez encore effectuer un coup avec cette pièce");
+            
+            //Réinitialisation de certains indicateurs
+            sup = false;
+            ok = 0;
+            X1 = 0;
+            Y1 = 0;
+            haut = false;
+            droite = false;
+            type = 0;
+            rejoue = 1;
+            return true;
+
+        }
+        else{
+            Debug.Log("Vous ne pouvez plus manger de pion");
+            //Réinitialisation des indicateurs
+            sup = false;
+            ok = 0;
+            X1 = 0;
+            Y1 = 0;
+            haut = false;
+            droite = false;
+            type = 0;
+            rejoue = 0;
+            return false;
+        }
+
+    }
+
+    private bool checkIfMoveAgainPossible(){
+        int check = 0,cpt=0;
+        Debug.Log("Check Si dplcmt encore possible");
+        //Check si case libre à deux cases de la pièce puis si pièce adverse à une case
+        Debug.Log("XP="+mouseDestination.x + "YP=" + mouseDestination.y);
+        if (pieces[(int)(mouseDestination.x+2),(int)(mouseDestination.y+2)] == null){ //En haut à droite
+            Debug.Log("haut/droite");
+            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            if (check != 0) cpt++;
+        }
+        if (pieces[(int)(mouseDestination.x+2),(int)(mouseDestination.y-2)] == null){ //En bas à droite
+            Debug.Log("bas/droite");
+            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            if (check != 0) cpt++;
+        }
+        if (pieces[(int)(mouseDestination.x-2),(int)(mouseDestination.y+2)] == null){ //En haut à gauche
+            Debug.Log("haut/gauche");
+            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            if (check != 0) cpt++;
+        }
+        if (pieces[(int)(mouseDestination.x-2),(int)(mouseDestination.y-2)] == null){ //En bas à gauche
+            Debug.Log("bas/gauche");
+            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            if (check != 0) cpt++;
+        }
+        
+        Debug.Log("cpt = " + cpt);
+
+        if (cpt != 0) {
+            Debug.Log("dplcmt possible");
+            mouseOver = mouseDestination;
+            return true;
+        }
+        else {
+            Debug.Log("dplcmt non possible");
+            return false;
+        }
+    }
+    private int checkSiPionAdverse(int XP,int YP) {
+        Piece c1 = pieces[XP,YP];
+        int check =0;
+        if (c1 != null && c1.color == new Color (0,0,0) && !joueur) {
+            check = 5;
+        }
+        else if (c1 != null && c1.color == new Color (1,1,1) && joueur) {
+            check = 5;
+        }
+        return check;
     }
     
-    private bool checkIfMovePossible(bool joueur){
+    private bool checkIfMovePossible(bool joueur, int rejoue){
        
         if (mouseDestination.x == mouseOver.x + 1  || mouseDestination.x == mouseOver.x - 1  || mouseDestination.x == mouseOver.x + 2  || mouseDestination.x == mouseOver.x - 2) {
             
@@ -215,7 +290,7 @@ public class Board : MonoBehaviour
             
             
             //Check condition dplcmt
-            if (type == 1) {  //Test si dplcmt simple possible
+            if (type == 1 && rejoue == 0) {  //Test si dplcmt simple possible
                 
                 Piece p = pieces[(int)(mouseDestination.x - 1),(int)(mouseDestination.y - 1)];
                 
@@ -347,8 +422,6 @@ public class Board : MonoBehaviour
         mouseDestination.y = (int)(hit.point.z + 0.5f);
         Debug.Log("xD="+ mouseDestination.x + " and yD=" + mouseDestination.y);
     }
-    
-
 
     private void GenerateBoard(int i, int j, int idTile){
         tileObject = Instantiate(tilePrefab) as GameObject;
@@ -371,7 +444,6 @@ public class Board : MonoBehaviour
         tileObjectMeshRenderer.material = tileObjectMaterial;
 
     }
-
 
     private void GeneratePiece(int y, int x){
          if ((y<=4 || y>=7) && (y%2==0 && x%2==0 || y%2==1 && x%2==1)) {
@@ -422,50 +494,12 @@ public class Board : MonoBehaviour
                 nomObject.name = "joueurNoir";
             }
 
-            if (i==0) nomObject.transform.position = new Vector3(-5,0.8f,9);
-            else nomObject.transform.position = new Vector3(10.8f,0.8f,9);
+            if (i==0) nomObject.transform.position = new Vector3(-5,0.8f,8.5f);
+            else nomObject.transform.position = new Vector3(10.8f,0.8f,8.5f);
             
             tableau[i] = jA;  //tableau[0] = joueurBlanc  | [1] = joueurNoir                     
         }
         
     }
 
-    private void ChangeNomAffichage(){
-
-        if (joueur) {
-            tableau[1].nameJoueur.color = new Color (255,0,0);
-            tableau[1].nameJoueur.text = "Joueur noir" + "\n Pièces : " + tableau[1].nbPiece;
-            tableau[0].nameJoueur.color = new Color (255,255,255);
-            tableau[0].nameJoueur.text = "Joueur blanc" + "\n Pièces : " + tableau[0].nbPiece;
-        }
-        else  {
-            tableau[0].nameJoueur.color = new Color (255,0,0);
-            tableau[0].nameJoueur.text = "Joueur blanc" + "\n Pièces : " + tableau[0].nbPiece;
-            tableau[1].nameJoueur.color = new Color (255,255,255);
-            tableau[1].nameJoueur.text = "Joueur noir" + "\n Pièces : " + tableau[1].nbPiece;
-        }
-    }
-
-    private void changePositionNomAffichage(){
-        if (joueur){ //vu par joueur noir
-            JoueurAffichage jB = tableau[0];
-            jB.transform.position = new Vector3(16,0.8f,2);
-            jB.transform.eulerAngles = new Vector3(60,-170,7);
-            JoueurAffichage jN = tableau[1];
-            jN.transform.position = new Vector3(0.3f,0.5f,2);
-            jN.transform.eulerAngles = new Vector3(60,-170,7);
-
-        }
-        else { //vu par joueur blanc
-            JoueurAffichage jB = tableau[0];
-            jB.transform.position = new Vector3(-5,0.8f,9);
-            jB.transform.eulerAngles = new Vector3(60,0,0);
-            JoueurAffichage jN = tableau[1];
-            jN.transform.position = new Vector3(10.8f,0.8f,9);
-            jN.transform.eulerAngles = new Vector3(60,0,0);
-        }
-    }
-
-    
-    
 }

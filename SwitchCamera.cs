@@ -28,6 +28,8 @@ public class SwitchCamera : MonoBehaviour
     void Update()
     {
         changeCamera();
+        changePositionNomAffichage();
+        ChangeNomAffichage();
     }
     private void changeCamera(){
         if (board.joueur) { // camera Noire Active
@@ -44,6 +46,41 @@ public class SwitchCamera : MonoBehaviour
             lightBlanche.enabled = true;
             lightNoire.enabled = false;
           
+        }
+    }
+
+     private void changePositionNomAffichage(){
+        if (board.joueur){ //vu par joueur noir
+            JoueurAffichage jB = board.tableau[0];
+            jB.transform.position = new Vector3(16,0.8f,2.5f);
+            jB.transform.eulerAngles = new Vector3(60,-170,7);
+            JoueurAffichage jN = board.tableau[1];
+            jN.transform.position = new Vector3(0.5f,0.5f,2.2f);
+            jN.transform.eulerAngles = new Vector3(60,-170,7);
+
+        }
+        else { //vu par joueur blanc
+            JoueurAffichage jB = board.tableau[0];
+            jB.transform.position = new Vector3(-5,0.8f,8.5f);
+            jB.transform.eulerAngles = new Vector3(60,0,0);
+            JoueurAffichage jN = board.tableau[1];
+            jN.transform.position = new Vector3(10.8f,0.8f,8.3f);
+            jN.transform.eulerAngles = new Vector3(60,0,0);
+        }
+    }
+
+    private void ChangeNomAffichage(){
+        if (board.joueur) {
+            board.tableau[1].nameJoueur.color = new Color (255,0,0);
+            board.tableau[1].nameJoueur.text = "Joueur noir" + "\n Pièces : " + board.tableau[1].nbPiece;
+            board.tableau[0].nameJoueur.color = new Color (255,255,255);
+            board.tableau[0].nameJoueur.text = "Joueur blanc" + "\n Pièces : " + board.tableau[0].nbPiece;
+        }
+        else  {
+            board.tableau[0].nameJoueur.color = new Color (255,0,0);
+            board.tableau[0].nameJoueur.text = "Joueur blanc" + "\n Pièces : " + board.tableau[0].nbPiece;
+            board.tableau[1].nameJoueur.color = new Color (255,255,255);
+            board.tableau[1].nameJoueur.text = "Joueur noir" + "\n Pièces : " + board.tableau[1].nbPiece;
         }
     }
 }
