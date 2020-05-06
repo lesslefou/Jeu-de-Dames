@@ -17,7 +17,7 @@ public class Board : MonoBehaviour
 
     private RaycastHit hit;
     private Piece ptouch;
-    private Vector2 mouseOver = new Vector2(0,0), mouseDestination = new Vector2(0,0);
+    private Vector2 mouseOver = new Vector2(0,0), mouseDestination = new Vector2(0,0), lastPieceMoved = new Vector2(0,0);
     private bool next = false;
     public bool joueur = false; // false = blanc ; true = noir
     private int ok=0;
@@ -26,6 +26,9 @@ public class Board : MonoBehaviour
     private float X1=0, Y1=0;
     private int type = 0;   // =1 dplcmt simple   =2 tentative manger pion    =0 dplcmt non possible
     private int rejoue = 0;
+    private int time = 0;
+    private bool countDown = false;
+    private int dplcmnt = 0;
     
 
     // Start is called before the first frame update
@@ -46,80 +49,162 @@ public class Board : MonoBehaviour
     }
 
 
-    // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(0)){
+        if (countDown) {
+            Debug.Log("time = "  +time);
+            time ++;
+            if (sup) {
+                if (checkIfMoveAgainPossible()){ //Le joueur peut encore manger un pion
+                    checkSiJoueurRejoue(); 
+                }
+                else {
+                    sup = false;
+                    dplcmnt = 1;
+                }
+            }
+            if (time == 100 ||time == 200 || time == 300) {
+                Debug.Log(time);
+            }
             
-            if (joueur) Debug.Log("joueur N");
-            else Debug.Log("joueur B");
+            if (time >= 300){
+                consequenceFinAction();
+            }
+        }
+        else {
+            if (Input.GetMouseButtonDown(0)){
+                if (joueur) Debug.Log("joueur N");
+                else Debug.Log("joueur B");
 
-            //Trace un rayon laser
+                //Trace un rayon laser
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out hit)){
+                    //Recupere le nom de l'objet touché
+                    string nameObject = hit.transform.name;
+                    
+                    //Si c'est une pièce alors on effectue les actions suivantes
+                    if (nameObject == "PieceB" || nameObject == "PieceN"){
+                        if (!next){
+                            Debug.Log("Sélection pion");
+                            verificationPiece(nameObject);
+
+                            if (ok != 0) {
+                                //récupère les coordonnées de la pièce
+                                selectionPiece();
+                                next = true;
+                            }
+                        }
+                        else {
+                            //Si sélection d'une autre pièce de la même couleur, on repart à la première étape
+                            if ((joueur && nameObject == "PieceN") || (!joueur && nameObject == "PieceB")) {
+                                Debug.Log("Vous avez sélectionné une autre pièce.");
+                                //récupère les coordonnées de la pièce
+                                selectionPiece();
+                            }
+                            else { 
+                                Debug.Log("Sélection dplcmt");
+                                mouseDestinationUpdate();
+
+                                //On regarde si on peut déplacer la pièce
+                                if (checkIfMovePossible(joueur,rejoue)){
+                                    movePiece();
+                                    
+                                    countDown = true;
+                                    
+
+                                }
+                            }
+                        }                    
+                        
+                    }
+                    else { // Pas de pièce sur cette case
+                        if (next) {
+                            mouseDestinationUpdate();
+
+                            //On regarde si on peut déplacer la pièce
+                            if (checkIfMovePossible(joueur,rejoue)){
+                                movePiece();
+                                countDown = true;
+                            }
+                        }
+                        else {
+                            Debug.Log("Veuillez sélectionner un jeton.");
+                        }
+
+                    }
+                }  
+            }
+        }
+        
+    }
+
+
+    private void checkSiJoueurRejoue(){
+        Debug.Log ("move again possible");
+
+        if (Input.GetMouseButtonDown(0)){ //Si le joueur essaye de rebouger son pion
+            Debug.Log("nouvelle tentative de manger");
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out hit)){
                 //Recupere le nom de l'objet touché
                 string nameObject = hit.transform.name;
-                
-                //Si c'est une pièce alors on effectue les actions suivantes
-                if (nameObject == "PieceB" || nameObject == "PieceN"){
-                    if (!next){
-                        Debug.Log("Sélection pion");
-                        verificationPiece(nameObject);
-
-                        if (ok != 0) {
-                            //récupère les coordonnées de la pièce
-                            selectionPiece();
-                            next = true;
-                        }
+                Debug.Log ("essaye d'aller sur "+nameObject);
+                if (nameObject != "PieceB" && nameObject != "PieceN"){
+                    mouseDestinationUpdate();
+                    if (checkIfMovePossible(joueur,rejoue)){
+                        movePiece();
                     }
-                    else {
-                        //Si sélection d'une autre pièce de la même couleur, on repart à la première étape
-                        if ((joueur && nameObject == "PieceN") || (!joueur && nameObject == "PieceB")) {
-                            Debug.Log("Vous avez sélectionné une autre pièce.");
-                            //récupère les coordonnées de la pièce
-                            selectionPiece();
-                        }
-                        else { 
-                            Debug.Log("Sélection dplcmt");
-                            mouseDestinationUpdate();
-                            if (checkIfMovePossible(joueur,rejoue)){
-                                if (movePiece()){
-                                    Debug.Log("Selectionnez un autre pion à manger");
-                                }
-                                else {
-                                    Debug.Log("Bien joué, au tour de l'autre joueur");
-                                    changementJoueur();
-                                }
-                            }
-                        }
-                    }                    
-                    
                 }
-                else { // Pas de pièce sur cette case
-                    if (next) {
-                        mouseDestinationUpdate();
-
-                        //On regarde si on peut déplacer la pièce
-                        if (checkIfMovePossible(joueur,rejoue)){
-                            if (checkIfMovePossible(joueur,rejoue)){
-                                if (movePiece()){
-                                    Debug.Log("Selectionnez un autre pion à manger");
-                                }
-                                else {
-                                    Debug.Log("Bien joué, au tour de l'autre joueur");
-                                    changementJoueur();
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        Debug.Log("Veuillez sélectionner un jeton.");
-                    }
-
-                }
-            }  
+            }
         }
     }
+
+    private void consequenceFinAction() {
+        Debug.Log ("consequenceFinAction");
+        if (sup && dplcmnt == 0){ //Le joueur pouvait encore manger un pion mais ne l'a pas fait // son pion est supprimé
+            Debug.Log("Vous n'avez pas continué le mouvement alors que vous le pouvez.\nVotre pion est mangé automatiquement par l'adversaire");
+            
+            //Supprimer le pion du joueur
+            Debug.Log("LastPieceMoved = " + lastPieceMoved.x + lastPieceMoved.y);
+            Piece destroy = pieces[(int)(lastPieceMoved.x -1),(int)(lastPieceMoved.y -1)];
+            if (destroy != null) {
+                pieces[(int)(lastPieceMoved.x -1),(int)(lastPieceMoved.y -1)] = null;
+                Destroy(destroy.gameObject);
+
+                if (!joueur) {
+                    tableau[0].nbPiece--; //nbPionB--;
+                }
+                else {
+                    tableau[1].nbPiece--; //nbPionN--;
+                }
+                Debug.Log("NbPionB : " + tableau[0].nbPiece + ", NbPionN : " + tableau[1].nbPiece);
+            }
+            
+
+        } 
+        else {
+            Debug.Log("Bien joué, au tour de l'autre joueur");
+        }
+
+        
+        //Réinitialisation des indicateurs
+        sup = false;
+        ok = 0;
+        X1 = 0;
+        Y1 = 0;
+        haut = false;
+        droite = false;
+        type = 0;
+        rejoue = 0;
+        countDown = false;
+        dplcmnt = 0;
+        time = 0;
+        changementJoueur();
+        
+    }
+
+
+
 
     private void verificationPiece(string namePiece){
         if (joueur && namePiece == "PieceN") {
@@ -132,6 +217,7 @@ public class Board : MonoBehaviour
             Debug.Log("Veuillez sélectionner un pion de votre couleur");
         }
     }
+
     private void selectionPiece(){
         mouseOverUpdate();
         if (ok == 1) {
@@ -154,7 +240,7 @@ public class Board : MonoBehaviour
         next = false;
     }
 
-    private bool movePiece(){
+    private void movePiece(){
         Piece toMove = pieces[(int)(mouseOver.x -1),(int)(mouseOver.y -1)];
         toMove.transform.position = new Vector3(mouseDestination.x,0.6f,mouseDestination.y);
         toMove.coordinates = new Vector2(mouseDestination.y,mouseDestination.x);
@@ -167,7 +253,6 @@ public class Board : MonoBehaviour
         }
         
         if (sup == true) {
-            
             Piece toDestroy = pieces[(int)(X1-1),(int)(Y1-1)];
             if (toDestroy!=null) {
                 pieces[(int)(mouseDestination.x -1),(int)(mouseDestination.y -1)] = null;
@@ -183,7 +268,6 @@ public class Board : MonoBehaviour
                 }
                 Debug.Log("NbPionB : " + tableau[0].nbPiece + ", NbPionN : " + tableau[1].nbPiece);
             }
-            
         }
 
         pieces[(int)(mouseDestination.x -1),(int)(mouseDestination.y -1)] = toMove;
@@ -192,60 +276,34 @@ public class Board : MonoBehaviour
         }
         pieces[(int)(mouseOver.x -1),(int)(mouseOver.y -1)] = null;
 
-        if (sup == true && checkIfMoveAgainPossible()){
-            Debug.Log("Vous pouvez encore effectuer un coup avec cette pièce");
-            
-            //Réinitialisation de certains indicateurs
-            sup = false;
-            ok = 0;
-            X1 = 0;
-            Y1 = 0;
-            haut = false;
-            droite = false;
-            type = 0;
-            rejoue = 1;
-            return true;
-
-        }
-        else{
-            Debug.Log("Vous ne pouvez plus manger de pion");
-            //Réinitialisation des indicateurs
-            sup = false;
-            ok = 0;
-            X1 = 0;
-            Y1 = 0;
-            haut = false;
-            droite = false;
-            type = 0;
-            rejoue = 0;
-            return false;
-        }
-
+        
     }
 
     private bool checkIfMoveAgainPossible(){
-        int check = 0,cpt=0;
+        int check = 0, cpt=0;
+        float mDx = mouseDestination.x, mDy = mouseDestination.y;
         Debug.Log("Check Si dplcmt encore possible");
         //Check si case libre à deux cases de la pièce puis si pièce adverse à une case
-        Debug.Log("XP="+mouseDestination.x + "YP=" + mouseDestination.y);
-        if (pieces[(int)(mouseDestination.x+2),(int)(mouseDestination.y+2)] == null){ //En haut à droite
+        Debug.Log("XP=" + mDx + "YP=" + mDy);
+
+        if (pieces[(int)(mDx+1),(int)(mDy+1)] == null){ //En haut à droite
             Debug.Log("haut/droite");
-            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            check = checkSiPionAdverse((int)(mDx+1),(int)(mDy+1));
             if (check != 0) cpt++;
         }
-        if (pieces[(int)(mouseDestination.x+2),(int)(mouseDestination.y-2)] == null){ //En bas à droite
+        if (pieces[(int)(mDx+1),(int)(mDy-1)] == null){ //En bas à droite
             Debug.Log("bas/droite");
-            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            check = checkSiPionAdverse((int)(mDx+1),(int)(mDy-1));
             if (check != 0) cpt++;
         }
-        if (pieces[(int)(mouseDestination.x-2),(int)(mouseDestination.y+2)] == null){ //En haut à gauche
+        if (pieces[(int)(mDx-1),(int)(mDy+1)] == null){ //En haut à gauche
             Debug.Log("haut/gauche");
-            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            check = checkSiPionAdverse((int)(mouseDestination.x-1),(int)(mDy+1));
             if (check != 0) cpt++;
         }
-        if (pieces[(int)(mouseDestination.x-2),(int)(mouseDestination.y-2)] == null){ //En bas à gauche
+        if (pieces[(int)(mDx-1),(int)(mDy-1)] == null){ //En bas à gauche
             Debug.Log("bas/gauche");
-            check = checkSiPionAdverse((int)(mouseDestination.x),(int)(mouseDestination.y));
+            check = checkSiPionAdverse((int)(mDx-1),(int)(mDy-1));
             if (check != 0) cpt++;
         }
         
@@ -262,13 +320,16 @@ public class Board : MonoBehaviour
         }
     }
     private int checkSiPionAdverse(int XP,int YP) {
-        Piece c1 = pieces[XP,YP];
+        Debug.Log("XPA = " + XP + " YPA = "+YP);
+        Piece c1 = pieces[XP-1,YP-1];
         int check =0;
         if (c1 != null && c1.color == new Color (0,0,0) && !joueur) {
             check = 5;
+            Debug.Log("joueur blanc mange joueur noir");
         }
         else if (c1 != null && c1.color == new Color (1,1,1) && joueur) {
             check = 5;
+            Debug.Log("joueur noir mange joueur blanc");
         }
         return check;
     }
@@ -346,6 +407,7 @@ public class Board : MonoBehaviour
                             else { //joueur blanche  
                                 Debug.Log("Tentative de manger un pion adverse réussite.");
                                 sup = true;
+                                lastPieceMoved = mouseDestination;
                                 return true;
                             }
                         }
@@ -359,6 +421,7 @@ public class Board : MonoBehaviour
                             else { //joueur noir  
                                 Debug.Log("Tentative de manger un pion adverse réussite.");
                                 sup = true;
+                                lastPieceMoved = mouseDestination;
                                 return true;
                             }
                         }
